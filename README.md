@@ -8,3 +8,6 @@ Convert image of Micromouse maze to text data
 # maze
 homographyで変換した写真から，迷路データを取り出します．
 
+# source
+僕が撮影した迷路の写真をサンプルとして入れてあります．
+
