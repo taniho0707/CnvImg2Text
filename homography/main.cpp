@@ -27,13 +27,72 @@ void myMouseCallback(int event, int x, int y, int flags, void *param){
 	return;
 }
 
-void findMaze(Mat_<Vec3b> &img, Point2f *pos){
-	// Íğ¿ô¤òÈ¯À¸¤µ¤»¡¤ÆÃÄê¤Î°ìÅÀ¤«¤éÁöºº¤ò»Ï¤á¡¤¥Ş¥¹¥¯²èÁü¤òºî¤ë
-	// ¹õ¢ª¹õ¡¤¹õ¢ªÇò¡¤¹õ¢ªÀÖ¡¤Çò¢ªÇò¡¤Çò¢ªÀÖ¡¤ÀÖ¢ªÀÖ¤Î¤ß¤ÎÁöºº¤òÇ§¤á¤ë
+void findMaze(const Mat_<Vec3b> &img, Point2f *pos){
+	// ä¹±æ•°ã‚’ç™ºç”Ÿã•ã›ï¼Œç‰¹å®šã®ä¸€ç‚¹ã‹ã‚‰èµ°æŸ»ã‚’å§‹ã‚ï¼Œãƒã‚¹ã‚¯ç”»åƒã‚’ä½œã‚‹
+	// é»’â†’é»’ï¼Œé»’â†’ç™½ï¼Œé»’â†’èµ¤ï¼Œç™½â†’ç™½ï¼Œç™½â†’èµ¤ï¼Œèµ¤â†’èµ¤ã®ã¿ã®èµ°æŸ»ã‚’èªã‚ã‚‹	
 	
-	
-	// 
-	
+	auto newimg = img.clone();
+	Mat singleimg(newimg.rows, newimg.cols, CV_8UC1);
+
+	cout << "width:" << newimg.cols << ", height:" << newimg.rows << endl;
+
+	// èµ¤è‰²ã®ã¿ã®æŠ½å‡º
+	cvtColor(newimg, newimg, CV_RGB2HSV);
+	for(int x=0; x<newimg.cols; ++x){
+		for(int y=0; y<newimg.rows; ++y){
+			auto h = newimg.at<Vec3b>(y, x)[0];
+			auto s = newimg.at<Vec3b>(y, x)[1];
+			auto v = newimg.at<Vec3b>(y, x)[2];
+			if(h > 100 && h < 160){// && s > 150 && v < 250){
+				newimg.at<Vec3b>(y, x)[0] = 0;
+				newimg.at<Vec3b>(y, x)[1] = 0;
+				newimg.at<Vec3b>(y, x)[2] = 255;
+				singleimg.at<uint8_t>(y, x) = 255;
+			} else {
+				newimg.at<Vec3b>(y, x)[0] = 0;
+				newimg.at<Vec3b>(y, x)[1] = 0;
+				newimg.at<Vec3b>(y, x)[2] = 0;
+				singleimg.at<uint8_t>(y, x) = 0;
+			}
+		}
+	}
+	cvtColor(newimg, newimg, CV_HSV2RGB);
+
+	// // ç¸®å°å‡¦ç†ã§ãƒã‚¤ã‚ºã‚’é™¤å»
+	// for(int i=0; i<3; ++i){
+	// 	erode(newimg, newimg, Mat());
+	// 	erode(singleimg, singleimg, Mat());
+	// }
+
+	// ã‚¨ãƒƒã‚¸æ¤œå‡º
+	Canny(singleimg, singleimg, 50, 200, 3);
+
+	Mat lineimg(newimg.rows, newimg.cols, CV_8UC(3));
+	// vector<Vec4i> lines;
+	// HoughLinesP( singleimg, lines, 1, CV_PI/180, 80, 30, 10 );
+	// for( size_t i = 0; i < lines.size(); i++ ){
+	// 	line( lineimg, Point(lines[i][0], lines[i][1]),
+	// 		  Point(lines[i][2], lines[i][3]), Scalar(0,0,255), 3, 8 );
+	// }
+
+	vector<Vec2f> lines;
+	HoughLines( singleimg, lines, 1, CV_PI/180, 150 );
+
+	for( size_t i = 0; i < lines.size(); i++ ){
+		float rho = lines[i][0];
+		float theta = lines[i][1];
+		double a = cos(theta), b = sin(theta);
+		double x0 = a*rho, y0 = b*rho;
+		Point pt1(cvRound(x0 + 1000*(-b)),
+				  cvRound(y0 + 1000*(a)));
+		Point pt2(cvRound(x0 - 1000*(-b)),
+				  cvRound(y0 - 1000*(a)));
+		line( lineimg, pt1, pt2, Scalar(0,0,255), 3, 8 );
+	}
+
+	imwrite("out_line.jpg", lineimg);
+	imwrite("out_single.jpg", singleimg);
+	imwrite("out_orig.jpg", newimg);
 }
 
 int main(int argc, char **argv){
