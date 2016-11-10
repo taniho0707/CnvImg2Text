@@ -27,3 +27,7 @@
 *.exe
 *.out
 *.app
+
+homography/main
+maze/main
+
