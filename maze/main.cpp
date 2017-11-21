@@ -2,16 +2,19 @@
 #include <opencv2/opencv.hpp>
 #include <fstream>
 
+#include <stdio.h>
+#include <stdlib.h>
+
 using namespace std;
 using namespace cv;
 
 
-char itoa(char in){
-	if(in > 9 && in < 16){
-		return 'A'+(in-10);
-	}
-	return '0'+in;
-}
+// char itoa(char in){
+// 	if(in > 9 && in < 16){
+// 		return 'A'+(in-10);
+// 	}
+// 	return '0'+in;
+// }
 
 void colorExtraction(Mat *src, Mat *dst, int code,
 					 int ch1Lower, int ch1Upper,
@@ -120,9 +123,9 @@ int isExistWall(Mat &mat, int sizeX, int sizeY, int posX, int posY, int side){
 				bgr = mat.at<Vec3b>(y, x);
 				if(bgr[1] > 100){
 					++ count;
-					mat.at<Vec3b>(y, x)[0] = 0;
-					mat.at<Vec3b>(y, x)[1] = 0;
-					mat.at<Vec3b>(y, x)[2] = 255;
+					// mat.at<Vec3b>(y, x)[0] = 0;
+					// mat.at<Vec3b>(y, x)[1] = 0;
+					// mat.at<Vec3b>(y, x)[2] = 255;
 				}
 			}
 			if(count < widthWallColumn * 0.1){
@@ -139,9 +142,9 @@ int isExistWall(Mat &mat, int sizeX, int sizeY, int posX, int posY, int side){
 				bgr = mat.at<Vec3b>(y, x);
 				if(bgr[1] > 100){
 					++ count;
-					mat.at<Vec3b>(y, x)[0] = 0;
-					mat.at<Vec3b>(y, x)[1] = 0;
-					mat.at<Vec3b>(y, x)[2] = 255;
+					// mat.at<Vec3b>(y, x)[0] = 0;
+					// mat.at<Vec3b>(y, x)[1] = 0;
+					// mat.at<Vec3b>(y, x)[2] = 255;
 				}
 			}
 			if(count < widthWallRow * 0.1){
@@ -220,13 +223,45 @@ int main(int argc, char **argv){
 					tmp += 2;
 				if((i == 15) || isExistWall(img2, 16, 16, j, i, 1))
 					tmp += 8;
-				ofs << itoa(tmp);
+				char num[5];
+				sprintf(num, "%d", tmp);
+				ofs << num;
 				if(j != 15) ofs << ",";
 			}
 			ofs << "}," << endl;
 		}
 		ofs << "};";
+	} else if(mazeX == 32 && mazeY == 32){
+		unsigned char tmp = 0;
+		ofs << "map[][]=" << endl;
+		ofs << "{";
+		for (int i=0; i<32; i++) {
+			ofs << "{";
+			for (int j=31; j>=0; j--) {
+				tmp = 0;
+				if((i == 31) || isExistWall(img2, 32, 32, i, j, 0))
+					tmp += 2;
+				if((j == 31) || isExistWall(img2, 32, 32, i, j, 1))
+					tmp += 8;
+				if((j == 0) || isExistWall(img2, 32, 32, i, j-1, 1))
+					tmp += 1;
+				if((i == 0) || isExistWall(img2, 32, 32, i-1, j, 0))
+					tmp += 4;
+				char num[5];
+				sprintf(num, "%d", tmp);
+				ofs << num;
+				// ofs << itoa(tmp, 10);
+				if(j != 0) ofs << ",";
+			}
+			if (i == 31) {
+				ofs << "}" << endl;
+			} else {
+				ofs << "}," << endl;
+			}
+		}
+		ofs << "};";
 	}
+
 	
 	ofs.close();
 	imwrite(dst_image, img2);
